@@ -7,5 +7,6 @@ add_executable(SMA
         src/main.cpp
         include/sma.h
         include/random_generator.h
+        include/executive_timer.h
 )
 

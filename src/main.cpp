@@ -1,5 +1,6 @@
 #include "../include/sma.h"
 #include "../include/random_generator.h"
+#include "../include/executive_timer.h"
 
 #include <stdint.h>
 #include <cmath>
@@ -22,11 +23,26 @@ SMA_TEST tester(const std::vector<T>& input, const std::vector<T>& expected, T e
 
 int main()
 {
-    auto data = rand_generate<float>(100000,1,10);
-   
-    auto avg = sma(data.begin(),data.end(),4);
-   
     
+    auto data_f = rand_generate<float>(10000000,-10,10);
+    auto data_d = rand_generate<double>(10000000,-10,10);
 
+
+    std::vector<int> winsize {4,8,16,32,64,128};
+
+    for(int i = 0; i < winsize.size(); ++i)
+    {
+        {
+            ExecTimer timer("float -n 10`000`000 -w " + std::to_string(winsize[i]));
+            auto avg = sma(data_f.begin(),data_f.end(),winsize[i]);
+        }
+        {
+            ExecTimer timer("double -n 10`000`000 -w " + std::to_string(winsize[i]));
+            auto avg = sma(data_d.begin(),data_d.end(),winsize[i]);
+        }
+    }
+    
+   
+   
     return 0;
 }
