@@ -18,7 +18,7 @@ public:
         std::chrono::duration<float> dur = clock::now() - start_;
         if(!msg_.empty())
             printf("[%s] ",msg_.c_str());
-        printf("%.3f sec\n",dur.count());
+        printf("%.5f sec\n",dur.count());
     }
 };
 

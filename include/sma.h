@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <numeric>
+#include <future>
+#include <thread>
 
 /*
     ALGORITHM:
@@ -53,5 +55,52 @@ std::vector<typename Iterator::value_type> sma(Iterator begin, Iterator end, siz
     return avg;
 }
 
+
+/* parallel func */
+template <typename Iterator>
+std::vector<typename Iterator::value_type> sma_parallel(Iterator begin, Iterator end,size_t window, size_t num_threads)
+{
+    if(!num_threads)
+        return {};
+    else if(num_threads == 1)
+        return sma(begin,end,window);
+
+    
+    using T = typename Iterator::value_type;
+    size_t count = std::distance(begin,end);
+    
+    if(count < window)
+        return {}; // return empty vec if not enough elements
+
+    size_t windows_amount = count - window + 1;
+    std::vector<T> reduced;
+    reduced.reserve(windows_amount);
+
+    num_threads = num_threads > windows_amount ? windows_amount : num_threads; // dont run unnecessary threads
+    size_t iter_per_thread = windows_amount / num_threads; //work windows in each thread
+
+    std::vector<std::future<std::vector<T>>> futures;
+    futures.reserve(num_threads);
+
+    
+    for(size_t t = 0; t < num_threads-1; ++t)
+    {
+        auto thread_begin = begin; // beginning first work window
+        begin = std::next(begin,iter_per_thread-1); // slide beginnig to the beginning last work window
+        auto thread_end = std::next(begin,window); // ending last work window
+        begin = std::next(begin,1); // move to the next work window
+        futures.emplace_back(std::move(std::async(std::launch::async,[=]{return sma(thread_begin,thread_end,window);})));
+    }
+    futures.emplace_back(std::move(std::async(std::launch::async,[=]{return sma(begin,end,window);})));
+
+    
+    for(auto it = futures.begin(), end = futures.end(); it != end; ++it)
+    {
+        std::vector<T> returned = it->get();
+        reduced.insert(reduced.end(),returned.begin(),returned.end());
+    }
+
+    return reduced;    
+}
 
 #endif 
